@@ -1,29 +1,22 @@
 cmake_minimum_required(VERSION 3.16)
 
-# Project Name and Language
 project(TextEditor LANGUAGES CXX)
 
-# ---- Standards ----
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 
-# ---- Include directories ----
-# This ensures modular architecture (classes and functions) can find the header files
-include_directories(
-    ${PROJECT_SOURCE_DIR}/include
+include_directories(${PROJECT_SOURCE_DIR}/include)
+
+file(GLOB_RECURSE CORE_FILES
+    "${PROJECT_SOURCE_DIR}/src/DataStructures/*.cpp"
+    "${PROJECT_SOURCE_DIR}/src/Core/*.cpp"
+    "${PROJECT_SOURCE_DIR}/src/Utils/*.cpp"
 )
 
-# ---- Collect all C++ source files ----
-# Automatically grabs all .cpp files in the src/ directory and its subfolders
-file(GLOB_RECURSE SRC_FILES
-    "${PROJECT_SOURCE_DIR}/src/*.cpp"
-)
+add_executable(${PROJECT_NAME} src/main.cpp ${CORE_FILES})
+target_include_directories(${PROJECT_NAME} PRIVATE ${PROJECT_SOURCE_DIR}/src)
 
-# ---- Create executable ----
-add_executable(${PROJECT_NAME} ${SRC_FILES})
+file(GLOB_RECURSE TEST_FILES "${PROJECT_SOURCE_DIR}/tests/*.cpp")
 
-target_include_directories(${PROJECT_NAME} PRIVATE
-    ${PROJECT_SOURCE_DIR}/src
-)
-
-set(TOOLS_DST_DIR "${CMAKE_BINARY_DIR}")
+add_executable(TextEditorTests ${TEST_FILES} ${CORE_FILES})
+target_include_directories(TextEditorTests PRIVATE ${PROJECT_SOURCE_DIR}/src)
