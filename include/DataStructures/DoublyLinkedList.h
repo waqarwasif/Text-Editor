@@ -23,13 +23,23 @@ public:
     DoublyLinkedList();
     ~DoublyLinkedList();
 
+    // Core operations for Text Insertion and Deletion (Feature 3)[cite: 13]
     void insertLine(int lineNumber, const std::string &text);
     void deleteLine(int lineNumber);
-    void displayDocument() const; 
+    void displayDocument() const;
 
+    // Utility operations
     int getLineCount() const;
     std::string getLine(int lineNumber) const;
     void modifyLine(int lineNumber, const std::string &newText);
     bool isEmpty() const;
-};
 
+    // File Operation Helpers added by Asma (Feature 1)[cite: 12]
+    const Node *getHead() const { return head; }
+    void clear();
+    void swap(DoublyLinkedList &other) noexcept;
+
+    // Memory safety: prevents accidental list duplication that causes crashes (Feature 7)[cite: 13]
+    DoublyLinkedList(const DoublyLinkedList &) = delete;
+    DoublyLinkedList &operator=(const DoublyLinkedList &) = delete;
+};

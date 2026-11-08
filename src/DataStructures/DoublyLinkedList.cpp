@@ -3,7 +3,8 @@
 
 DoublyLinkedList::DoublyLinkedList() : head(nullptr), tail(nullptr), lineCount(0) {}
 
-DoublyLinkedList::~DoublyLinkedList()
+// Extracting your deletion loop into clear() satisfies Feature 1 (Create new document)
+void DoublyLinkedList::clear()
 {
     Node *current = head;
     while (current != nullptr)
@@ -12,6 +13,22 @@ DoublyLinkedList::~DoublyLinkedList()
         delete current;
         current = nextNode;
     }
+    head = tail = nullptr;
+    lineCount = 0;
+}
+
+// The destructor now cleanly calls clear() to prevent memory leaks
+DoublyLinkedList::~DoublyLinkedList()
+{
+    clear();
+}
+
+// Enables atomic file saving by swapping pointers in O(1) time
+void DoublyLinkedList::swap(DoublyLinkedList &other) noexcept
+{
+    std::swap(head, other.head);
+    std::swap(tail, other.tail);
+    std::swap(lineCount, other.lineCount);
 }
 
 void DoublyLinkedList::insertLine(int lineNumber, const std::string &text)
