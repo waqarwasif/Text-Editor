@@ -5,6 +5,9 @@ project(TextEditor LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 
+# Force static linking so MSYS2 doesn't require background DLLs to run
+set(CMAKE_EXE_LINKER_FLAGS "-static -static-libgcc -static-libstdc++")
+
 include_directories( ${PROJECT_SOURCE_DIR}/include)
 
 file(GLOB_RECURSE CORE_FILES
