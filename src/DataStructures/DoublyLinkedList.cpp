@@ -1,7 +1,7 @@
 #include "DataStructures/DoublyLinkedList.h"
 #include <stdexcept>
 
-DoublyLinkedList::DoublyLinkedList() : head(nullptr), tail(nullptr), lineCount(0) {}
+DoublyLinkedList::DoublyLinkedList() : head(nullptr), tail(nullptr), lineCount(0) , totalCharacters(0) {}
 
 // Extracting your deletion loop into clear() satisfies Feature 1 (Create new document)
 void DoublyLinkedList::clear()
@@ -29,6 +29,7 @@ void DoublyLinkedList::swap(DoublyLinkedList &other) noexcept
     std::swap(head, other.head);
     std::swap(tail, other.tail);
     std::swap(lineCount, other.lineCount);
+    std::swap(totalCharacters, other.totalCharacters);
 }
 
 void DoublyLinkedList::insertLine(int lineNumber, const std::string &text)
@@ -76,6 +77,7 @@ void DoublyLinkedList::insertLine(int lineNumber, const std::string &text)
         current->next = newNode;
     }
     lineCount++;
+    totalCharacters += calculateLength(text); 
 }
 
 void DoublyLinkedList::deleteLine(int lineNumber)
@@ -112,11 +114,28 @@ void DoublyLinkedList::deleteLine(int lineNumber)
         tail = nodeToDelete->prev; // Deleting the tail
     }
 
+    totalCharacters -= calculateLength(nodeToDelete->textData);
     delete nodeToDelete;
     lineCount--;
-}
 
-void DoublyLinkedList::displayDocument() const
+}
+void DoublyLinkedList::displayDocumentInfo() const
+{
+    std::cout << "\n--- Document Statistics ---\n";
+    if (head == nullptr)
+    {
+        std::cout << "The document is currently empty.\n";
+        std::cout << "Total lines: 0\n";
+        std::cout << "Total characters: 0\n";
+    }
+    else
+    {
+        std::cout << "Total lines: " << lineCount << "\n";
+        std::cout << "Total characters: " << totalCharacters << "\n";
+    }
+    std::cout << "---------------------------\n";
+}
+void DoublyLinkedList::displayDocumentLineByLine() const
 {
     if (head == nullptr)
     {
@@ -133,6 +152,32 @@ void DoublyLinkedList::displayDocument() const
         currentLine++;
     }
     std::cout << "\nTotal lines: " << lineCount << std::endl;
+}
+
+void DoublyLinkedList::displayDocument() const
+{
+    if (head == nullptr)
+    {
+        std::cout << "[Document is empty]" << std::endl;
+        return;
+    }
+
+    Node *current = head;
+    while (current != nullptr)
+    {
+        std::cout << current->textData << std::endl;
+        current = current->next;
+    }
+    std::cout << "\nTotal lines: " << lineCount << std::endl;
+}
+
+int DoublyLinkedList::calculateLength(const std::string &str) const
+{
+    int count = 0;;
+    for (int i=0; str[i]; i++){
+        count++;
+    }
+    return count;
 }
 
 int DoublyLinkedList::getLineCount() const

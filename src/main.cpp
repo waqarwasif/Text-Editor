@@ -16,8 +16,10 @@ void displayMenu(const FileOperations &fileOps)
     std::cout << "3. Save Document\n";
     std::cout << "4. Save As...\n";
     std::cout << "5. Display Document\n";
-    std::cout << "6. Insert Line\n";
-    std::cout << "7. Delete Line\n";
+    std::cout << "6. Display Document Line by Line\n";
+    std::cout << "7. Display Document Statistics\n";
+    std::cout << "8. Insert Line\n";
+    std::cout << "9. Delete Line\n";
     std::cout << "0. Exit\n";
     std::cout << "Select an option: ";
 }
@@ -117,7 +119,17 @@ int main()
             std::cout << "-------------------------\n";
             break;
 
-        case 6:
+        case 6: // Display Document Line by Line[cite: 5]
+            std::cout << "\n--- Document Contents ---\n";
+            doc.displayDocumentLineByLine();
+            std::cout << "-------------------------\n";
+            break;
+            
+        case 7:
+            doc.displayDocumentInfo();
+            break;
+
+        case 8:
         { // Insert a New Line[cite: 6]
             int lineNum;
             std::string text;
@@ -140,7 +152,7 @@ int main()
             break;
         }
 
-        case 7:
+        case 9:
         { // Delete a Line[cite: 6]
             int lineNum;
             std::cout << "Enter line number to delete: ";
