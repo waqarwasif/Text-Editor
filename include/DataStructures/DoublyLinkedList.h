@@ -20,6 +20,12 @@ private:
     int lineCount;
     int totalCharacters;
 
+    // Node at 1-based lineNumber, walking from whichever end is closer.
+    // Precondition: 1 <= lineNumber <= lineCount (callers validate).
+    Node *nodeAt(int lineNumber) const;
+
+public:
+
 public:
     DoublyLinkedList();
     ~DoublyLinkedList();
@@ -33,8 +39,8 @@ public:
     void displayDocumentInfo() const;
     // Utility operations
     int getLineCount() const;
-    std::string getLine(int lineNumber) const;
-    void modifyLine(int lineNumber, const std::string &newText);
+    const std::string &getLine(int lineNumber) const; // valid until that line is modified/deleted
+    void modifyLine(int lineNumber, std::string newText); // by value: caller may std::move in
     bool isEmpty() const;
     int calculateLength(const std::string &str) const;
 

@@ -3,7 +3,16 @@
 #include <limits>
 #include "DataStructures/DoublyLinkedList.h"
 #include "Core/FileOperations.h"
-
+#include "Core/TextEditor.h"
+static bool confirmOverwrite(const std::string &path)
+{
+    if (!FileOperations::fileExists(path))
+        return true;
+    std::cout << "'" << path << "' already exists. Overwrite? (y/n): ";
+    std::string answer;
+    std::getline(std::cin, answer);
+    return !answer.empty() && (answer[0] == 'y' || answer[0] == 'Y');
+}
 void displayMenu(const FileOperations &fileOps)
 {
     std::cout << "\n=== TEXT EDITOR MENU ===\n";
@@ -20,14 +29,26 @@ void displayMenu(const FileOperations &fileOps)
     std::cout << "7. Display Document Statistics\n";
     std::cout << "8. Insert Line\n";
     std::cout << "9. Delete Line\n";
+    std::cout << "10. Insert Text at Position\n";
     std::cout << "0. Exit\n";
     std::cout << "Select an option: ";
 }
 
+static bool readInt(const char *prompt, int &out)
+{
+    std::cout << prompt;
+    const bool ok = static_cast<bool>(std::cin >> out);
+    if (!ok)
+        std::cin.clear();
+    std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+    return ok;
+}
+
 int main()
 {
-    DoublyLinkedList doc;
-    FileOperations fileOps;
+    TextEditor editor;
+    DoublyLinkedList &doc = editor.document();   // same object the editor edits
+    FileOperations &fileOps = editor.files();
     int choice;
 
     std::cout << "Welcome to the CS-218 Text Editor.\n";
@@ -86,7 +107,7 @@ int main()
                 std::string path;
                 std::cout << "No file name set. Enter file path to save as: ";
                 std::getline(std::cin, path);
-                if (!path.empty())
+               if (!path.empty() && confirmOverwrite(path))
                 {
                     FileResult res = fileOps.saveAs(path, doc);
                     std::cout << FileOperations::describe(res) << "\n";
@@ -105,7 +126,7 @@ int main()
             std::string path;
             std::cout << "Enter new file path to save as: ";
             std::getline(std::cin, path);
-            if (!path.empty())
+            if (!path.empty() && confirmOverwrite(path))
             {
                 FileResult res = fileOps.saveAs(path, doc);
                 std::cout << FileOperations::describe(res) << "\n";
@@ -124,31 +145,23 @@ int main()
             doc.displayDocumentLineByLine();
             std::cout << "-------------------------\n";
             break;
-            
+
         case 7:
             doc.displayDocumentInfo();
             break;
 
-        case 8:
-        { // Insert a New Line[cite: 6]
+          case 8:
+        { // Insert a whole new line
             int lineNum;
             std::string text;
-            std::cout << "Enter line number to insert at: ";
-            std::cin >> lineNum;
-            std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-            std::cout << "Enter text: ";
+            if (!readInt("Enter line number to insert at: ", lineNum))
+            {
+                std::cout << "Invalid number.\n";
+                break;
+            }
+            std::cout << "Enter text (empty = blank line): ";
             std::getline(std::cin, text);
-
-            try
-            {
-                doc.insertLine(lineNum, text);
-                fileOps.markModified(); // Crucial: Tells FileOps the document changed
-                std::cout << "Line inserted.\n";
-            }
-            catch (const std::exception &e)
-            {
-                std::cout << "Error: " << e.what() << "\n";
-            }
+            std::cout << TextEditor::describe(editor.insertNewLine(lineNum, text)) << "\n";
             break;
         }
 
@@ -169,6 +182,21 @@ int main()
             {
                 std::cout << "Error: " << e.what() << "\n";
             }
+            break;
+        }
+
+        case 10:
+        { // Insert text inside a line
+            int lineNum, column;
+            std::string text;
+            if (!readInt("Line number: ", lineNum) || !readInt("Column: ", column))
+            {
+                std::cout << "Invalid number.\n";
+                break;
+            }
+            std::cout << "Text to insert: ";
+            std::getline(std::cin, text);
+            std::cout << TextEditor::describe(editor.insertText(lineNum, column, text)) << "\n";
             break;
         }
 
