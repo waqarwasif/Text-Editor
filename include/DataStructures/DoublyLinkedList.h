@@ -27,6 +27,7 @@ public:
     // Core operations for Text Insertion and Deletion (Feature 3)[cite: 13]
     void insertLine(int lineNumber, const std::string &text);
     void deleteLine(int lineNumber);
+    void deleteRangeOfLines(int startLine, int endLine);
     void displayDocumentLineByLine() const;
     void displayDocument() const;
     void displayDocumentInfo() const;

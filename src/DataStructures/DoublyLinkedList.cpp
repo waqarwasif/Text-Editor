@@ -119,6 +119,68 @@ void DoublyLinkedList::deleteLine(int lineNumber)
     lineCount--;
 
 }
+
+void DoublyLinkedList::deleteRangeOfLines(int startLine, int endLine)
+{
+    if (head == nullptr || startLine < 1 || startLine > lineCount)
+    {
+        throw std::out_of_range("Invalid start line number for deletion.");
+    }
+    if (endLine < 1 || endLine > lineCount)
+    {
+        throw std::out_of_range("Invalid end line number for deletion.");
+    }
+    if (startLine > endLine)
+    {
+        throw std::invalid_argument("startLine cannot be greater than endLine.");
+    }
+
+    Node *nodeToDelete = head;
+    for (int i = 1; i < startLine; ++i)
+    {
+        nodeToDelete = nodeToDelete->next;
+    }
+
+    Node *nodeBeforeDelete = nodeToDelete->prev;
+    Node *current;
+    int linesDeleted = (endLine - startLine) + 1;
+
+    int currentLine = startLine;
+    while (currentLine <= endLine)
+    {
+        current = nodeToDelete;
+        nodeToDelete = nodeToDelete->next;
+
+        
+        totalCharacters -= calculateLength(current->textData);
+
+        delete current;
+        currentLine++;
+    }
+
+    // Connect the left side (Before Delete)
+    if (nodeBeforeDelete == nullptr)
+    {
+        head = nodeToDelete; // Deleting from line 1 means head shifts right
+    }
+    else
+    {
+        nodeBeforeDelete->next = nodeToDelete;
+    }
+
+    // Connect the right side (After Delete) and update Tail
+    if (nodeToDelete != nullptr)
+    {
+        nodeToDelete->prev = nodeBeforeDelete;
+    }
+    else
+    {
+        tail = nodeBeforeDelete; //Deletion hit the end, update the tail
+    }
+
+    
+    lineCount -= linesDeleted;
+}
 void DoublyLinkedList::displayDocumentInfo() const
 {
     std::cout << "\n--- Document Statistics ---\n";
