@@ -1,6 +1,7 @@
 #pragma once
 #include <string>
 #include <iostream>
+#include "Array.h"
 
 // Represents a single line of text in the document
 struct Node
@@ -28,9 +29,16 @@ public:
     void insertLine(int lineNumber, const std::string &text);
     void deleteLine(int lineNumber);
     void deleteRangeOfLines(int startLine, int endLine);
+    void deleteTextFromLine(int lineNumber, int startIndex, int count);
+    void deleteCharacterFromLine(int lineNumber, int charIndex);
+    bool deleteWord(const std::string &targetWord);
     void displayDocumentLineByLine() const;
     void displayDocument() const;
     void displayDocumentInfo() const;
+    ResultArray searchDocument(const std::string &target) const;
+
+
+
     // Utility operations
     int getLineCount() const;
     std::string getLine(int lineNumber) const;

@@ -1,9 +1,8 @@
 #include "DataStructures/DoublyLinkedList.h"
 #include <stdexcept>
 
-DoublyLinkedList::DoublyLinkedList() : head(nullptr), tail(nullptr), lineCount(0) , totalCharacters(0) {}
+DoublyLinkedList::DoublyLinkedList() : head(nullptr), tail(nullptr), lineCount(0), totalCharacters(0) {}
 
-// Extracting your deletion loop into clear() satisfies Feature 1 (Create new document)
 void DoublyLinkedList::clear()
 {
     Node *current = head;
@@ -15,15 +14,14 @@ void DoublyLinkedList::clear()
     }
     head = tail = nullptr;
     lineCount = 0;
+    totalCharacters = 0;
 }
 
-// The destructor now cleanly calls clear() to prevent memory leaks
 DoublyLinkedList::~DoublyLinkedList()
 {
     clear();
 }
 
-// Enables atomic file saving by swapping pointers in O(1) time
 void DoublyLinkedList::swap(DoublyLinkedList &other) noexcept
 {
     std::swap(head, other.head);
@@ -41,26 +39,22 @@ void DoublyLinkedList::insertLine(int lineNumber, const std::string &text)
 
     Node *newNode = new Node(text);
 
-    // Case 1: Inserting into an empty document
     if (head == nullptr)
     {
         head = tail = newNode;
     }
-    // Case 2: Inserting at the beginning
     else if (lineNumber == 1)
     {
         newNode->next = head;
         head->prev = newNode;
         head = newNode;
     }
-    // Case 3: Inserting at the end
     else if (lineNumber == lineCount + 1)
     {
         tail->next = newNode;
         newNode->prev = tail;
         tail = newNode;
     }
-    // Case 4: Inserting in the middle
     else
     {
         Node *current = head;
@@ -77,7 +71,7 @@ void DoublyLinkedList::insertLine(int lineNumber, const std::string &text)
         current->next = newNode;
     }
     lineCount++;
-    totalCharacters += calculateLength(text); 
+    totalCharacters += calculateLength(text);
 }
 
 void DoublyLinkedList::deleteLine(int lineNumber)
@@ -89,20 +83,18 @@ void DoublyLinkedList::deleteLine(int lineNumber)
 
     Node *nodeToDelete = head;
 
-    // Traverse to the correct line
     for (int i = 1; i < lineNumber; ++i)
     {
         nodeToDelete = nodeToDelete->next;
     }
 
-    // Update pointers to bypass the node
     if (nodeToDelete->prev != nullptr)
     {
         nodeToDelete->prev->next = nodeToDelete->next;
     }
     else
     {
-        head = nodeToDelete->next; // Deleting the head
+        head = nodeToDelete->next;
     }
 
     if (nodeToDelete->next != nullptr)
@@ -111,13 +103,12 @@ void DoublyLinkedList::deleteLine(int lineNumber)
     }
     else
     {
-        tail = nodeToDelete->prev; // Deleting the tail
+        tail = nodeToDelete->prev;
     }
 
     totalCharacters -= calculateLength(nodeToDelete->textData);
     delete nodeToDelete;
     lineCount--;
-
 }
 
 void DoublyLinkedList::deleteRangeOfLines(int startLine, int endLine)
@@ -151,36 +142,33 @@ void DoublyLinkedList::deleteRangeOfLines(int startLine, int endLine)
         current = nodeToDelete;
         nodeToDelete = nodeToDelete->next;
 
-        
         totalCharacters -= calculateLength(current->textData);
 
         delete current;
         currentLine++;
     }
 
-    // Connect the left side (Before Delete)
     if (nodeBeforeDelete == nullptr)
     {
-        head = nodeToDelete; // Deleting from line 1 means head shifts right
+        head = nodeToDelete;
     }
     else
     {
         nodeBeforeDelete->next = nodeToDelete;
     }
 
-    // Connect the right side (After Delete) and update Tail
     if (nodeToDelete != nullptr)
     {
         nodeToDelete->prev = nodeBeforeDelete;
     }
     else
     {
-        tail = nodeBeforeDelete; //Deletion hit the end, update the tail
+        tail = nodeBeforeDelete;
     }
 
-    
     lineCount -= linesDeleted;
 }
+
 void DoublyLinkedList::displayDocumentInfo() const
 {
     std::cout << "\n--- Document Statistics ---\n";
@@ -197,6 +185,7 @@ void DoublyLinkedList::displayDocumentInfo() const
     }
     std::cout << "---------------------------\n";
 }
+
 void DoublyLinkedList::displayDocumentLineByLine() const
 {
     if (head == nullptr)
@@ -235,11 +224,114 @@ void DoublyLinkedList::displayDocument() const
 
 int DoublyLinkedList::calculateLength(const std::string &str) const
 {
-    int count = 0;;
-    for (int i=0; str[i]; i++){
+    int count = 0;
+    for (int i = 0; str[i]; i++)
+    {
         count++;
     }
     return count;
+}
+
+ResultArray DoublyLinkedList::searchDocument(const std::string &target) const
+{
+    ResultArray results;
+    int targetLength = calculateLength(target);
+
+    if (targetLength == 0 || head == nullptr)
+    {
+        return results;
+    }
+
+    Node *current = head;
+    int currentLine = 1;
+
+    while (current != nullptr)
+    {
+        int lineLength = calculateLength(current->textData);
+
+        if (lineLength >= targetLength)
+        {
+            for (int i = 0; i <= lineLength - targetLength; ++i)
+            {
+                bool match = true;
+
+                for (int j = 0; j < targetLength; ++j)
+                {
+                    if (current->textData[i + j] != target[j])
+                    {
+                        match = false;
+                        break;
+                    }
+                }
+
+                if (match)
+                {
+                    results.add({currentLine, i});
+                }
+            }
+        }
+        current = current->next;
+        currentLine++;
+    }
+
+    return results;
+}
+
+void DoublyLinkedList::deleteTextFromLine(int lineNumber, int startIndex, int count)
+{
+    if (head == nullptr || lineNumber < 1 || lineNumber > lineCount)
+    {
+        throw std::out_of_range("Invalid line number.");
+    }
+
+    Node *current = head;
+    for (int i = 1; i < lineNumber; ++i)
+    {
+        current = current->next;
+    }
+
+    int lineLength = calculateLength(current->textData);
+
+    if (startIndex < 0 || startIndex >= lineLength || count <= 0)
+    {
+        throw std::out_of_range("Invalid start index or count.");
+    }
+
+    if (startIndex + count > lineLength)
+    {
+        count = lineLength - startIndex;
+    }
+
+    for (int i = startIndex; i < lineLength - count; ++i)
+    {
+        current->textData[i] = current->textData[i + count];
+    }
+
+    current->textData.resize(lineLength - count);
+
+    totalCharacters -= count;
+}
+
+void DoublyLinkedList::deleteCharacterFromLine(int lineNumber, int charIndex)
+{
+    deleteTextFromLine(lineNumber, charIndex, 1);
+}
+
+bool DoublyLinkedList::deleteWord(const std::string &targetWord)
+{
+    int wordLength = calculateLength(targetWord);
+    if (wordLength == 0)
+        return false;
+
+    ResultArray matches = searchDocument(targetWord);
+    if (matches.size() == 0)
+    {
+        return false;
+    }
+
+    SearchResult match = matches.get(0);
+    deleteTextFromLine(match.lineNumber, match.startIndex, wordLength);
+    return true;
 }
 
 int DoublyLinkedList::getLineCount() const
@@ -272,7 +364,9 @@ void DoublyLinkedList::modifyLine(int lineNumber, const std::string &newText)
     {
         current = current->next;
     }
+    totalCharacters -= calculateLength(current->textData);
     current->textData = newText;
+    totalCharacters += calculateLength(newText);
 }
 
 bool DoublyLinkedList::isEmpty() const
