@@ -37,6 +37,8 @@ def create_structure():
         'tests/test_undo_stack.cpp',
         'tests/test_file_io.cpp',
         'tests/test_search_replace.cpp',
+        'tests/test_text_processing.cpp',
+        'tests/test_text_editor.cpp',
         'data/sample_doc.txt',
         'data/empty_doc.txt',
         'docs/Project_Report.pdf',

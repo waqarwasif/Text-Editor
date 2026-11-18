@@ -1,5 +1,6 @@
 #include "DataStructures/DoublyLinkedList.h"
 #include <stdexcept>
+#include <utility>
 
 DoublyLinkedList::DoublyLinkedList() : head(nullptr), tail(nullptr), lineCount(0), totalCharacters(0) {}
 
@@ -29,6 +30,23 @@ void DoublyLinkedList::swap(DoublyLinkedList &other) noexcept
     std::swap(lineCount, other.lineCount);
     std::swap(totalCharacters, other.totalCharacters);
 }
+Node *DoublyLinkedList::nodeAt(int lineNumber) const
+{
+    Node *current;
+    if (lineNumber <= lineCount / 2) // nearer the head
+    {
+        current = head;
+        for (int i = 1; i < lineNumber; ++i)
+            current = current->next;
+    }
+    else // nearer the tail
+    {
+        current = tail;
+        for (int i = lineCount; i > lineNumber; --i)
+            current = current->prev;
+    }
+    return current;
+}
 
 void DoublyLinkedList::insertLine(int lineNumber, const std::string &text)
 {
@@ -57,11 +75,7 @@ void DoublyLinkedList::insertLine(int lineNumber, const std::string &text)
     }
     else
     {
-        Node *current = head;
-        for (int i = 1; i < lineNumber - 1; ++i)
-        {
-            current = current->next;
-        }
+        Node *current = nodeAt(lineNumber - 1);
         newNode->next = current->next;
         newNode->prev = current;
         if (current->next != nullptr)
@@ -168,6 +182,7 @@ void DoublyLinkedList::deleteRangeOfLines(int startLine, int endLine)
 
     lineCount -= linesDeleted;
 }
+
 
 void DoublyLinkedList::displayDocumentInfo() const
 {
@@ -339,34 +354,25 @@ int DoublyLinkedList::getLineCount() const
     return lineCount;
 }
 
-std::string DoublyLinkedList::getLine(int lineNumber) const
+const std::string &DoublyLinkedList::getLine(int lineNumber) const
 {
     if (lineNumber < 1 || lineNumber > lineCount)
     {
         throw std::out_of_range("Line number out of bounds.");
     }
-    Node *current = head;
-    for (int i = 1; i < lineNumber; ++i)
-    {
-        current = current->next;
-    }
-    return current->textData;
+    return nodeAt(lineNumber)->textData;
 }
 
-void DoublyLinkedList::modifyLine(int lineNumber, const std::string &newText)
+void DoublyLinkedList::modifyLine(int lineNumber, std::string newText)
 {
     if (lineNumber < 1 || lineNumber > lineCount)
     {
         throw std::out_of_range("Line number out of bounds.");
     }
-    Node *current = head;
-    for (int i = 1; i < lineNumber; ++i)
-    {
-        current = current->next;
-    }
-    totalCharacters -= calculateLength(current->textData);
-    current->textData = newText;
+    Node *node = nodeAt(lineNumber);
+    totalCharacters -= calculateLength(node->textData);
     totalCharacters += calculateLength(newText);
+    node->textData = std::move(newText);
 }
 
 bool DoublyLinkedList::isEmpty() const
