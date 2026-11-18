@@ -1,6 +1,6 @@
 #include "Core/TextEditor.h"
+#include "DataStructures/MyString.h"
 #include <iostream>
-#include <string>
 
 static int failures = 0;
 static void check(bool ok, const char *name)
@@ -53,7 +53,7 @@ int main()
     check(ed.insertNewLine(6) == EditResult::LineOutOfRange, "newline: line count+2");
     check(ed.insertNewLine(1, "a\rb") == EditResult::InvalidText, "newline: bad text");
 
-    ed.document().displayDocumentInfo(); // expect: 4 lines, 19 characters
+    ed.document().displayDocumentInfo();
 
     if (failures == 0)
         std::cout << "All TextEditor checks passed.\n";

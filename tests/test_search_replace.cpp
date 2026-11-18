@@ -1,7 +1,7 @@
 #include "DataStructures/DoublyLinkedList.h"
 #include "DataStructures/Array.h"
+#include "DataStructures/MyString.h"
 #include <iostream>
-#include <string>
 #include <stdexcept>
 
 static int failures = 0;
@@ -29,7 +29,6 @@ int main()
         ResultArray arr;
         check(arr.size() == 0, "ResultArray initial size is 0");
 
-        // Test dynamic resizing beyond initial capacity 10
         for (int i = 0; i < 25; ++i)
         {
             arr.add({i + 1, i * 2});
@@ -97,7 +96,6 @@ int main()
         doc.deleteTextFromLine(1, 1, 2); // Delete 'CD' from 'BCDEF'
         check(doc.getLine(1) == "BEF", "deleteTextFromLine 2 chars");
 
-        // Clamping count if exceeding length
         doc.deleteTextFromLine(1, 1, 100); // Delete 'EF'
         check(doc.getLine(1) == "B", "deleteTextFromLine clamps to end of line");
 
@@ -110,16 +108,14 @@ int main()
         DoublyLinkedList doc;
         for (int i = 1; i <= 5; ++i)
         {
-            doc.insertLine(i, "Line " + std::to_string(i));
+            doc.insertLine(i, "Line " + mystring::fromInt(i));
         }
 
-        // Delete lines 2 to 4
         doc.deleteRangeOfLines(2, 4);
         check(doc.getLineCount() == 2, "deleteRangeOfLines count is 2");
         check(doc.getLine(1) == "Line 1", "remaining line 1");
         check(doc.getLine(2) == "Line 5", "remaining line 2 is Line 5");
 
-        // Delete remaining all lines
         doc.deleteRangeOfLines(1, 2);
         check(doc.getLineCount() == 0 && doc.isEmpty(), "delete entire range empties document");
     }

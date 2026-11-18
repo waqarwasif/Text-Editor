@@ -1,9 +1,9 @@
 #pragma once
-#include <string>
 
-class DoublyLinkedList; // full definition is only needed in FileOperations.cpp
+#include "DataStructures/MyString.h"
 
-// Outcome of a file operation. The core functions report; they never print.
+class DoublyLinkedList;
+
 enum class FileResult
 {
     Ok,
@@ -21,34 +21,29 @@ enum class FileResult
 class FileOperations
 {
 public:
-    // ---- Core features (non-interactive, return a FileResult) ----
     FileResult createNew(DoublyLinkedList &doc);
-    FileResult open(const std::string &path, DoublyLinkedList &doc);
+    FileResult open(const mystring &path, DoublyLinkedList &doc);
     FileResult save(const DoublyLinkedList &doc);
-    FileResult saveAs(const std::string &path, const DoublyLinkedList &doc);
-    FileResult renameFile(const std::string &newName);
+    FileResult saveAs(const mystring &path, const DoublyLinkedList &doc);
+    FileResult renameFile(const mystring &newName);
 
-    // ---- Interactive guards (console prompts) ----
-    // Call before createNew / open / exit. Returns true if it is safe to continue.
     bool confirmUnsavedChanges(const DoublyLinkedList &doc);
-    bool exitEditor(const DoublyLinkedList &doc); // true = OK to quit
+    bool exitEditor(const DoublyLinkedList &doc);
 
-    // ---- State ----
     bool hasPath() const { return !filePath_.empty(); }
-    const std::string &currentPath() const { return filePath_; }
-    std::string displayName() const; // file name only, or "Untitled"
+    const mystring &currentPath() const { return filePath_; }
+    mystring displayName() const;
     bool isModified() const { return modified_; }
-    void markModified() { modified_ = true; } // call after every edit
+    void markModified() { modified_ = true; }
 
-    // ---- Helpers ----
-    static bool fileExists(const std::string &path);
-    static std::string describe(FileResult result);
+    static bool fileExists(const mystring &path);
+    static const char *describe(FileResult result);
 
 private:
-    FileResult writeAtomic(const std::string &path, const DoublyLinkedList &doc);
+    FileResult writeAtomic(const mystring &path, const DoublyLinkedList &doc);
     bool saveInteractive(const DoublyLinkedList &doc);
 
-    std::string filePath_;   // "" = unsaved new document
-    std::string eol_ = "\n"; // line ending of the opened file (LF or CRLF)
-    bool modified_ = false;  // unsaved changes exist
+    mystring filePath_;
+    mystring eol_ = "\n";
+    bool modified_ = false;
 };

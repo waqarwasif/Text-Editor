@@ -1,7 +1,7 @@
 #include "DataStructures/DoublyLinkedList.h"
+#include "DataStructures/MyString.h"
 #include <iostream>
 #include <stdexcept>
-#include <string>
 
 static int failures = 0;
 static void check(bool ok, const char *name)
@@ -27,9 +27,9 @@ int main()
 
     // 1. Build 1..7 (every insert is a tail insert)
     for (int i = 1; i <= 7; ++i)
-        list.insertLine(i, std::to_string(i));
+        list.insertLine(i, mystring::fromInt(i));
     for (int i = 1; i <= 7; ++i)
-        check(list.getLine(i) == std::to_string(i), "getLine returns the right node");
+        check(list.getLine(i) == mystring::fromInt(i), "getLine returns the right node");
 
     // 2. Insert near the head, then near the tail (exercises both walk directions)
     list.insertLine(2, "A"); // 1 A 2 3 4 5 6 7

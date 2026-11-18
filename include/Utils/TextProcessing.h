@@ -1,5 +1,6 @@
 #pragma once
-#include <string>
+
+#include "DataStructures/MyString.h"
 
 namespace TextProcessing
 {
@@ -11,19 +12,15 @@ namespace TextProcessing
         ColumnOutOfRange  // column not in 1 .. length+1
     };
 
-    // True if str contains no '\n', '\r' or '\0'.
-    bool isValidLineText(const std::string &str);
+    bool isValidLineText(const mystring &str);
 
-    // Inserts `text` before 1-based `column` of `str`, writing the result to `out`.
-    // `out` is modified ONLY when the status is Ok.
-    TextStatus insertAt(const std::string &str, int column,
-const std::string &text, std::string &out);
+    TextStatus insertAt(const mystring &str, int column,
+                        const mystring &text, mystring &out);
 
-    // ---- general helpers (also used by Core/FileOperations) ----
-    bool contains(const std::string &s, char c);
-    bool containsAnyOf(const std::string &s, const char *set); // set: NUL-terminated list
-    bool isBlank(const std::string &s);                         // empty or only ' ' / '\t'
-    std::string trim(const std::string &s);                     // strips ' ' '\t' '\r' '\n' at both ends
+    bool contains(const mystring &s, char c);
+    bool containsAnyOf(const mystring &s, const char *set);
+    bool isBlank(const mystring &s);
+    mystring trim(const mystring &s);
     char toLowerAscii(char c);
-    void eraseFront(std::string &s, int count);                 // removes the first `count` chars
+    void eraseFront(mystring &s, int count);
 }

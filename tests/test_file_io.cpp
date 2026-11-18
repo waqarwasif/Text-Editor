@@ -1,11 +1,10 @@
 #include "Core/FileOperations.h"
 #include "DataStructures/DoublyLinkedList.h"
+#include "DataStructures/MyString.h"
 
 #include <cstdio>
 #include <fstream>
 #include <iostream>
-#include <iterator>
-#include <string>
 
 static int failures = 0;
 static void check(bool ok, const char *name)
@@ -17,28 +16,44 @@ static void check(bool ok, const char *name)
     }
 }
 
-// Test-only helpers: the "no built-ins" rule applies to the editor, not to its tests.
-static void writeRaw(const std::string &path, const std::string &bytes)
+static void writeRaw(const char *path, const char *bytes, int count)
 {
     std::ofstream out(path, std::ios::binary);
-    out.write(bytes.data(), static_cast<std::streamsize>(bytes.size()));
+    out.write(bytes, count);
 }
-static std::string readRaw(const std::string &path)
+
+static mystring readRaw(const char *path)
 {
     std::ifstream in(path, std::ios::binary);
-    return std::string((std::istreambuf_iterator<char>(in)), std::istreambuf_iterator<char>());
+    mystring result;
+    char ch;
+    while (in.get(ch))
+    {
+        result.push_back(ch);
+    }
+    return result;
 }
-static bool startsWith(const std::string &s, const std::string &prefix)
+
+static bool startsWith(const mystring &s, const char *prefix)
 {
-    return s.size() >= prefix.size() && s.compare(0, prefix.size(), prefix) == 0;
+    int pLen = 0;
+    while (prefix[pLen] != '\0') pLen++;
+    if (s.length() < pLen)
+        return false;
+    for (int i = 0; i < pLen; ++i)
+    {
+        if (s[i] != prefix[i])
+            return false;
+    }
+    return true;
 }
 
 int main()
 {
-    const std::string fa = "tmp_fileio_a.txt";
-    const std::string fb = "tmp_fileio_b.txt";
-    std::remove(fa.c_str());
-    std::remove(fb.c_str());
+    const char *fa = "tmp_fileio_a.txt";
+    const char *fb = "tmp_fileio_b.txt";
+    std::remove(fa);
+    std::remove(fb);
 
     // ---- basic contract ----
     {
@@ -78,20 +93,23 @@ int main()
     }
 
     // ---- Step 4 regression targets ----
-    {   // BOM stripped (eraseFront)
-        writeRaw(fa, "\xEF\xBB\xBF" "hello\n");
+    {   // BOM stripped
+        const char bomHello[] = "\xEF\xBB\xBFhello\n";
+        writeRaw(fa, bomHello, 9);
         FileOperations ops;
         DoublyLinkedList doc;
         check(ops.open(fa, doc) == FileResult::Ok && doc.getLine(1) == "hello", "BOM stripped");
     }
-    {   // NUL byte means binary (contains)
-        writeRaw(fa, std::string("ab\0cd\n", 6));
+    {   // NUL byte means binary
+        const char nulBytes[] = {'a', 'b', '\0', 'c', 'd', '\n'};
+        writeRaw(fa, nulBytes, 6);
         FileOperations ops;
         DoublyLinkedList doc;
         check(ops.open(fa, doc) == FileResult::BinaryFile, "NUL byte -> BinaryFile");
     }
-    {   // CRLF: no CR in lines, and save keeps CRLF
-        writeRaw(fa, "a\r\nb\r\n");
+    {   // CRLF: save keeps CRLF
+        const char crlfBytes[] = "a\r\nb\r\n";
+        writeRaw(fa, crlfBytes, 6);
         FileOperations ops;
         DoublyLinkedList doc;
         check(ops.open(fa, doc) == FileResult::Ok && doc.getLineCount() == 2 &&
@@ -109,8 +127,8 @@ int main()
         check(!ops.hasPath(), "failed saveAs keeps the document untitled");
     }
     {   // rename: success, then name already taken
-        std::remove(fa.c_str());
-        std::remove(fb.c_str());
+        std::remove(fa);
+        std::remove(fb);
         FileOperations ops;
         DoublyLinkedList doc;
         doc.insertLine(1, "x");
@@ -122,8 +140,8 @@ int main()
               "rename to an existing name");
     }
 
-    std::remove(fa.c_str());
-    std::remove(fb.c_str());
+    std::remove(fa);
+    std::remove(fb);
 
     if (failures == 0)
         std::cout << "All file I/O checks passed.\n";

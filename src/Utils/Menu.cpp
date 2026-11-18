@@ -1,16 +1,15 @@
 #include "Utils/Menu.h"
 #include "Core/TextEditor.h"
 #include <iostream>
-#include <string>
 #include <limits>
 
-static bool confirmOverwrite(const std::string &path)
+static bool confirmOverwrite(const mystring &path)
 {
     if (!FileOperations::fileExists(path))
         return true;
     std::cout << "'" << path << "' already exists. Overwrite? (y/n): ";
-    std::string answer;
-    if (!std::getline(std::cin, answer))
+    mystring answer;
+    if (!mystring::getline(std::cin, answer))
         return false;
     return !answer.empty() && (answer[0] == 'y' || answer[0] == 'Y');
 }
@@ -62,9 +61,9 @@ void handleOpen(DoublyLinkedList &doc, FileOperations &fileOps)
 {
     if (fileOps.confirmUnsavedChanges(doc))
     {
-        std::string path;
+        mystring path;
         std::cout << "Enter file path to open: ";
-        if (!std::getline(std::cin, path))
+        if (!mystring::getline(std::cin, path))
             return;
         FileResult res = fileOps.open(path, doc);
         std::cout << FileOperations::describe(res) << "\n";
@@ -75,9 +74,9 @@ void handleSave(DoublyLinkedList &doc, FileOperations &fileOps)
 {
     if (!fileOps.hasPath())
     {
-        std::string path;
+        mystring path;
         std::cout << "No file name set. Enter file path to save as: ";
-        if (!std::getline(std::cin, path))
+        if (!mystring::getline(std::cin, path))
             return;
         if (!path.empty() && confirmOverwrite(path))
         {
@@ -94,9 +93,9 @@ void handleSave(DoublyLinkedList &doc, FileOperations &fileOps)
 
 void handleSaveAs(DoublyLinkedList &doc, FileOperations &fileOps)
 {
-    std::string path;
+    mystring path;
     std::cout << "Enter new file path to save as: ";
-    if (!std::getline(std::cin, path))
+    if (!mystring::getline(std::cin, path))
         return;
     if (!path.empty() && confirmOverwrite(path))
     {
@@ -141,7 +140,7 @@ void handleGetLine(const DoublyLinkedList &doc)
 
     try
     {
-        std::string line = doc.getLine(lineNum);
+        const mystring &line = doc.getLine(lineNum);
         std::cout << "Line " << lineNum << ": " << line << "\n";
     }
     catch (const std::exception &e)
@@ -153,7 +152,7 @@ void handleGetLine(const DoublyLinkedList &doc)
 void handleInsertLine(TextEditor &editor)
 {
     int lineNum;
-    std::string text;
+    mystring text;
     std::cout << "Enter line number to insert at: ";
     if (!(std::cin >> lineNum))
     {
@@ -166,7 +165,7 @@ void handleInsertLine(TextEditor &editor)
     }
     std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
     std::cout << "Enter text (empty = blank line): ";
-    if (!std::getline(std::cin, text))
+    if (!mystring::getline(std::cin, text))
         return;
 
     std::cout << TextEditor::describe(editor.insertNewLine(lineNum, text)) << "\n";
@@ -175,7 +174,7 @@ void handleInsertLine(TextEditor &editor)
 void handleInsertText(TextEditor &editor)
 {
     int lineNum, column;
-    std::string text;
+    mystring text;
     std::cout << "Enter line number: ";
     if (!(std::cin >> lineNum))
     {
@@ -198,7 +197,7 @@ void handleInsertText(TextEditor &editor)
     }
     std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
     std::cout << "Enter text to insert: ";
-    if (!std::getline(std::cin, text))
+    if (!mystring::getline(std::cin, text))
         return;
 
     std::cout << TextEditor::describe(editor.insertText(lineNum, column, text)) << "\n";
@@ -207,7 +206,7 @@ void handleInsertText(TextEditor &editor)
 void handleModifyLine(DoublyLinkedList &doc, FileOperations &fileOps)
 {
     int lineNum;
-    std::string newText;
+    mystring newText;
     std::cout << "Enter line number to modify: ";
     if (!(std::cin >> lineNum))
     {
@@ -220,7 +219,7 @@ void handleModifyLine(DoublyLinkedList &doc, FileOperations &fileOps)
     }
     std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
     std::cout << "Enter new text: ";
-    if (!std::getline(std::cin, newText))
+    if (!mystring::getline(std::cin, newText))
         return;
 
     try
@@ -385,9 +384,9 @@ void handleDeleteTextRange(DoublyLinkedList &doc, FileOperations &fileOps)
 
 void handleDeleteWord(DoublyLinkedList &doc, FileOperations &fileOps)
 {
-    std::string word;
+    mystring word;
     std::cout << "Enter word to delete: ";
-    if (!std::getline(std::cin, word))
+    if (!mystring::getline(std::cin, word))
         return;
 
     if (word.empty())
@@ -417,9 +416,9 @@ void handleDeleteWord(DoublyLinkedList &doc, FileOperations &fileOps)
 
 void handleSearch(const DoublyLinkedList &doc)
 {
-    std::string target;
+    mystring target;
     std::cout << "Enter word or text to search for: ";
-    if (!std::getline(std::cin, target))
+    if (!mystring::getline(std::cin, target))
         return;
 
     if (target.empty())

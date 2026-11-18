@@ -15,51 +15,48 @@ EditResult toEditResult(TextProcessing::TextStatus status)
     case TextStatus::InvalidCharacter: return EditResult::InvalidText;
     case TextStatus::ColumnOutOfRange: return EditResult::ColumnOutOfRange;
     }
-    return EditResult::InvalidText; // unreachable: every status is handled above
+    return EditResult::InvalidText;
 }
 } // namespace
 
-EditResult TextEditor::insertText(int line, int column, const std::string &text)
+EditResult TextEditor::insertText(int line, int column, const mystring &text)
 {
     const int count = doc_.getLineCount();
     if (line < 1 || line > count + 1)
         return EditResult::LineOutOfRange;
 
-    // Past the last line: treat the missing line as an empty string, so
-    // insertAt itself enforces "column must be 1" and the text checks.
     const bool pastEnd = (line == count + 1);
-    const std::string none;
-    const std::string &base = pastEnd ? none : doc_.getLine(line); // no copy
+    const mystring none;
+    const mystring &base = pastEnd ? none : doc_.getLine(line);
 
-    std::string updated;
+    mystring updated;
     const TextProcessing::TextStatus status =
         TextProcessing::insertAt(base, column, text, updated);
     if (status != TextProcessing::TextStatus::Ok)
-        return toEditResult(status); // nothing touched, not marked modified
+        return toEditResult(status);
 
-    // `base` is not used past this point (modifyLine overwrites that node).
     if (pastEnd)
         doc_.insertLine(line, updated);
     else
-        doc_.modifyLine(line, std::move(updated)); // moved in, not copied
+        doc_.modifyLine(line, std::move(updated));
 
     files_.markModified();
     return EditResult::Ok;
 }
 
-EditResult TextEditor::insertNewLine(int line, const std::string &text)
+EditResult TextEditor::insertNewLine(int line, const mystring &text)
 {
     if (line < 1 || line > doc_.getLineCount() + 1)
         return EditResult::LineOutOfRange;
     if (!TextProcessing::isValidLineText(text))
-        return EditResult::InvalidText; // an empty line is allowed: that is the point
+        return EditResult::InvalidText;
 
     doc_.insertLine(line, text);
     files_.markModified();
     return EditResult::Ok;
 }
 
-std::string TextEditor::describe(EditResult r)
+const char *TextEditor::describe(EditResult r)
 {
     switch (r)
     {
