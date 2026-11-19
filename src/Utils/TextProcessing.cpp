@@ -42,6 +42,75 @@ namespace TextProcessing
         return TextStatus::Ok;
     }
 
+      static void appendRange(mystring &dst, const char *src, int from, int to)
+    {
+        for (int i = from; i < to; ++i)
+            dst.push_back(src[i]);
+    }
+
+    bool replaceAt(const mystring &str, int index, int matchLen,
+                   const mystring &replacement, mystring &out)
+    {
+        const int len = str.size();
+        if (index < 0 || matchLen <= 0 || index > len - matchLen)
+            return false;
+
+        const char *s = str.c_str();
+        mystring result;
+        appendRange(result, s, 0, index);
+        appendRange(result, replacement.c_str(), 0, replacement.size());
+        appendRange(result, s, index + matchLen, len);
+
+        out = std::move(result);
+        return true;
+    }
+
+    int replaceAllInLine(const mystring &str, const mystring &target,
+                         const mystring &replacement, mystring &out)
+    {
+        const int len = str.size();
+        const int tLen = target.size();
+        if (tLen == 0 || tLen > len)
+            return 0;
+
+        const char *s = str.c_str();
+        const char *t = target.c_str();
+        const char *r = replacement.c_str();
+        const int rLen = replacement.size();
+
+        mystring result;
+        int count = 0;
+        int pos = 0;    // current scan position
+        int copied = 0; // everything before this index is already in `result`
+
+        while (pos <= len - tLen)
+        {
+            int j = 0;
+            while (j < tLen && s[pos + j] == t[j])
+                ++j;
+
+            if (j == tLen)
+            {
+                appendRange(result, s, copied, pos);
+                appendRange(result, r, 0, rLen);
+                pos += tLen; // jump past the match: no overlaps, no rescanning inserted text
+                copied = pos;
+                ++count;
+            }
+            else
+            {
+                ++pos;
+            }
+        }
+
+        if (count == 0)
+            return 0;
+
+        appendRange(result, s, copied, len);
+        out = std::move(result);
+        return count;
+    }
+
     bool contains(const mystring &s, char c)
     {
         const int n = s.size();

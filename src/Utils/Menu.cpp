@@ -42,7 +42,10 @@ void displayMenu(const FileOperations &fileOps)
     std::cout << "15. Delete Text Range from Line\n";
     std::cout << "16. Delete Word\n";
     std::cout << "--- Search ---\n";
-    std::cout << "17. Search Document\n";
+       std::cout << "17. Search Document\n";
+    std::cout << "--- Replace ---\n";
+    std::cout << "18. Replace One Occurrence\n";
+    std::cout << "19. Replace All Occurrences\n";
     std::cout << "------------------------\n";
     std::cout << " 0. Exit\n";
     std::cout << "Select an option: ";
@@ -185,7 +188,7 @@ void handleInsertText(TextEditor &editor)
         std::cout << "Invalid input. Please enter a valid number.\n";
         return;
     }
-    std::cout << "Enter column (0-based index): ";
+       std::cout << "Enter column (1 = start of line): ";
     if (!(std::cin >> column))
     {
         if (std::cin.eof())
@@ -443,6 +446,86 @@ void handleSearch(const DoublyLinkedList &doc)
     }
 }
 
+static bool readInt(const char *prompt, int &value)
+{
+    std::cout << prompt;
+    if (!(std::cin >> value))
+    {
+        if (std::cin.eof())
+            return false;
+        std::cin.clear();
+        std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+        std::cout << "Invalid input. Please enter a valid number.\n";
+        return false;
+    }
+    std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+    return true;
+}
+
+static void handleReplaceOccurrence(TextEditor &editor)
+{
+    mystring target;
+    mystring replacement;
+    std::cout << "Enter text to find (case-sensitive): ";
+    if (!mystring::getline(std::cin, target))
+        return;
+    if (target.empty())
+    {
+        std::cout << "Text to find cannot be empty.\n";
+        return;
+    }
+    std::cout << "Enter replacement text (empty = delete the match): ";
+    if (!mystring::getline(std::cin, replacement))
+        return;
+
+    int occurrence = 0;
+    int line = 0;
+    if (!readInt("Which occurrence to replace (1 = first): ", occurrence))
+        return;
+    if (!readInt("Line to search in (0 = whole document): ", line))
+        return;
+
+    ReplaceReport report;
+    const EditResult result = editor.replaceOccurrence(target, replacement, occurrence, line, &report);
+    if (result != EditResult::Ok)
+    {
+        std::cout << TextEditor::describe(result) << "\n";
+        return;
+    }
+    std::cout << "Replaced occurrence " << occurrence << " at line " << report.line
+              << ", column (index) " << (report.column - 1) << ".\n";
+}
+
+static void handleReplaceAll(TextEditor &editor)
+{
+    mystring target;
+    mystring replacement;
+    std::cout << "Enter text to find (case-sensitive): ";
+    if (!mystring::getline(std::cin, target))
+        return;
+    if (target.empty())
+    {
+        std::cout << "Text to find cannot be empty.\n";
+        return;
+    }
+    std::cout << "Enter replacement text (empty = delete the matches): ";
+    if (!mystring::getline(std::cin, replacement))
+        return;
+
+    int line = 0;
+    if (!readInt("Line to replace in (0 = whole document): ", line))
+        return;
+
+    ReplaceReport report;
+    const EditResult result = editor.replaceAll(target, replacement, line, &report);
+    if (result != EditResult::Ok)
+    {
+        std::cout << TextEditor::describe(result) << "\n";
+        return;
+    }
+    std::cout << "Replaced " << report.count << " occurrence(s).\n";
+}
+
 void menu(TextEditor &editor)
 {
     DoublyLinkedList &doc = editor.document();
@@ -536,8 +619,14 @@ void menu(TextEditor &editor)
         case 16:
             handleDeleteWord(doc, fileOps);
             break;
-        case 17:
+              case 17:
             handleSearch(doc);
+            break;
+        case 18:
+            handleReplaceOccurrence(editor);
+            break;
+        case 19:
+            handleReplaceAll(editor);
             break;
         default:
             std::cout << "Invalid option. Please select a valid menu number.\n";

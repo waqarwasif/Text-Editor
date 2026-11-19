@@ -15,7 +15,17 @@ EditResult toEditResult(TextProcessing::TextStatus status)
     case TextStatus::InvalidCharacter: return EditResult::InvalidText;
     case TextStatus::ColumnOutOfRange: return EditResult::ColumnOutOfRange;
     }
-    return EditResult::InvalidText;
+       return EditResult::InvalidText;
+}
+
+EditResult validateReplaceText(const mystring &target, const mystring &replacement)
+{
+    if (target.empty())
+        return EditResult::EmptyTarget;
+    if (!TextProcessing::isValidLineText(target) ||
+        !TextProcessing::isValidLineText(replacement))
+        return EditResult::InvalidText;
+    return EditResult::Ok;
 }
 } // namespace
 
@@ -56,6 +66,104 @@ EditResult TextEditor::insertNewLine(int line, const mystring &text)
     return EditResult::Ok;
 }
 
+EditResult TextEditor::replaceOccurrence(const mystring &target, const mystring &replacement,
+                                         int occurrence, int line, ReplaceReport *report)
+{
+    const EditResult valid = validateReplaceText(target, replacement);
+    if (valid != EditResult::Ok)
+        return valid;
+    if (occurrence < 1)
+        return EditResult::InvalidOccurrence;
+    if (line < 0 || line > doc_.getLineCount())
+        return EditResult::LineOutOfRange;
+    if (target == replacement)
+        return EditResult::NoChange;
+
+    int remaining = occurrence;
+    int ln = 0;
+    for (const Node *node = doc_.getHead(); node != nullptr; node = node->next)
+    {
+        ++ln;
+        if (line != 0)
+        {
+            if (ln < line)
+                continue;
+            if (ln > line)
+                break;
+        }
+
+        const mystring &text = node->textData;
+        int pos = text.find(target, 0);
+        while (pos != -1)
+        {
+            if (--remaining == 0)
+            {
+                mystring updated;
+                if (!TextProcessing::replaceAt(text, pos, target.size(), replacement, updated))
+                    return EditResult::NoMatchFound; // cannot happen: pos comes from find()
+
+                doc_.modifyLine(ln, std::move(updated));
+                files_.markModified();
+                if (report != nullptr)
+                {
+                    report->count = 1;
+                    report->line = ln;
+                    report->column = pos + 1;
+                }
+                return EditResult::Ok;
+            }
+            pos = text.find(target, pos + 1); // +1: overlapping matches count, like search
+        }
+    }
+    return EditResult::NoMatchFound;
+}
+
+EditResult TextEditor::replaceAll(const mystring &target, const mystring &replacement,
+                                  int line, ReplaceReport *report)
+{
+    const EditResult valid = validateReplaceText(target, replacement);
+    if (valid != EditResult::Ok)
+        return valid;
+    if (line < 0 || line > doc_.getLineCount())
+        return EditResult::LineOutOfRange;
+    if (target == replacement)
+        return EditResult::NoChange;
+
+    int total = 0;
+    int ln = 0;
+    for (const Node *node = doc_.getHead(); node != nullptr; node = node->next)
+    {
+        ++ln;
+        if (line != 0)
+        {
+            if (ln < line)
+                continue;
+            if (ln > line)
+                break;
+        }
+
+        mystring updated;
+        const int n = TextProcessing::replaceAllInLine(node->textData, target, replacement, updated);
+        if (n > 0)
+        {
+            doc_.modifyLine(ln, std::move(updated));
+            total += n;
+        }
+    }
+
+    if (total == 0)
+        return EditResult::NoMatchFound;
+
+    files_.markModified();
+    if (report != nullptr)
+    {
+        report->count = total;
+        report->line = 0;
+        report->column = 0;
+    }
+    return EditResult::Ok;
+}
+
 const char *TextEditor::describe(EditResult r)
 {
     switch (r)
@@ -65,6 +173,10 @@ const char *TextEditor::describe(EditResult r)
     case EditResult::InvalidText:      return "Text cannot contain line breaks or NUL characters.";
     case EditResult::LineOutOfRange:   return "Line number is out of range.";
     case EditResult::ColumnOutOfRange: return "Column is out of range.";
+    case EditResult::EmptyTarget:      return "The text to replace cannot be empty.";
+    case EditResult::InvalidOccurrence:return "Occurrence number must be 1 or greater.";
+    case EditResult::NoMatchFound:     return "No matching occurrence was found.";
+    case EditResult::NoChange:         return "The replacement is identical to the original text; nothing changed.";
     }
     return "Unknown error.";
 }

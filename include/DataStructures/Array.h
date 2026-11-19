@@ -19,8 +19,12 @@ private:
     void resize();
 
 public:
-    ResultArray();
+       ResultArray();
     ~ResultArray();
+    ResultArray(const ResultArray &other);
+    ResultArray &operator=(const ResultArray &other);
+    ResultArray(ResultArray &&other) noexcept;
+    ResultArray &operator=(ResultArray &&other) noexcept;
 
     void add(SearchResult result);
     SearchResult get(int index) const;
