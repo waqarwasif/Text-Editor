@@ -17,6 +17,38 @@ void DoublyLinkedList::clear()
     lineCount = 0;
     totalCharacters = 0;
 }
+DoublyLinkedList::DoublyLinkedList(const DoublyLinkedList &other)
+    : head(nullptr), tail(nullptr), lineCount(0), totalCharacters(0)
+{
+    Node *curr = other.head;
+    while (curr != nullptr)
+    {
+        Node *newNode = new Node(curr->textData);
+        if (head == nullptr)
+        {
+            head = tail = newNode;
+        }
+        else
+        {
+            tail->next = newNode;
+            newNode->prev = tail;
+            tail = newNode;
+        }
+        lineCount++;
+        totalCharacters += curr->textData.length();
+        curr = curr->next;
+    }
+}
+
+DoublyLinkedList &DoublyLinkedList::operator=(const DoublyLinkedList &other)
+{
+    if (this != &other)
+    {
+        DoublyLinkedList temp(other); // Deep copy
+        swap(temp);                   // O(1) pointer swap; temp destructor frees old nodes
+    }
+    return *this;
+}
 
 DoublyLinkedList::~DoublyLinkedList()
 {

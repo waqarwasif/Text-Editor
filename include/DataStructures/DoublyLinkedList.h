@@ -48,6 +48,6 @@ public:
     void clear();
     void swap(DoublyLinkedList &other) noexcept;
 
-    DoublyLinkedList(const DoublyLinkedList &) = delete;
-    DoublyLinkedList &operator=(const DoublyLinkedList &) = delete;
+    DoublyLinkedList(const DoublyLinkedList &other);
+    DoublyLinkedList &operator=(const DoublyLinkedList &other);
 };

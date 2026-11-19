@@ -1,6 +1,7 @@
 #include "Core/TextEditor.h"
 #include "Utils/TextProcessing.h"
 
+#include <stdexcept>
 #include <utility>
 
 namespace
@@ -15,7 +16,7 @@ EditResult toEditResult(TextProcessing::TextStatus status)
     case TextStatus::InvalidCharacter: return EditResult::InvalidText;
     case TextStatus::ColumnOutOfRange: return EditResult::ColumnOutOfRange;
     }
-       return EditResult::InvalidText;
+    return EditResult::InvalidText;
 }
 
 EditResult validateReplaceText(const mystring &target, const mystring &replacement)
@@ -45,6 +46,8 @@ EditResult TextEditor::insertText(int line, int column, const mystring &text)
     if (status != TextProcessing::TextStatus::Ok)
         return toEditResult(status);
 
+    saveSnapshot();
+
     if (pastEnd)
         doc_.insertLine(line, updated);
     else
@@ -60,6 +63,8 @@ EditResult TextEditor::insertNewLine(int line, const mystring &text)
         return EditResult::LineOutOfRange;
     if (!TextProcessing::isValidLineText(text))
         return EditResult::InvalidText;
+
+    saveSnapshot();
 
     doc_.insertLine(line, text);
     files_.markModified();
@@ -102,6 +107,8 @@ EditResult TextEditor::replaceOccurrence(const mystring &target, const mystring 
                 if (!TextProcessing::replaceAt(text, pos, target.size(), replacement, updated))
                     return EditResult::NoMatchFound; // cannot happen: pos comes from find()
 
+                saveSnapshot();
+
                 doc_.modifyLine(ln, std::move(updated));
                 files_.markModified();
                 if (report != nullptr)
@@ -131,6 +138,7 @@ EditResult TextEditor::replaceAll(const mystring &target, const mystring &replac
 
     int total = 0;
     int ln = 0;
+    bool snapshotTaken = false;
     for (const Node *node = doc_.getHead(); node != nullptr; node = node->next)
     {
         ++ln;
@@ -146,6 +154,11 @@ EditResult TextEditor::replaceAll(const mystring &target, const mystring &replac
         const int n = TextProcessing::replaceAllInLine(node->textData, target, replacement, updated);
         if (n > 0)
         {
+            if (!snapshotTaken)
+            {
+                saveSnapshot();
+                snapshotTaken = true;
+            }
             doc_.modifyLine(ln, std::move(updated));
             total += n;
         }
@@ -162,6 +175,111 @@ EditResult TextEditor::replaceAll(const mystring &target, const mystring &replac
         report->column = 0;
     }
     return EditResult::Ok;
+}
+
+void TextEditor::modifyLine(int lineNumber, const mystring &newText)
+{
+    if (lineNumber < 1 || lineNumber > doc_.getLineCount())
+        throw std::out_of_range("Invalid line number.");
+
+    saveSnapshot();
+    doc_.modifyLine(lineNumber, newText);
+    files_.markModified();
+}
+
+void TextEditor::deleteLine(int lineNumber)
+{
+    if (lineNumber < 1 || lineNumber > doc_.getLineCount())
+        throw std::out_of_range("Invalid line number.");
+
+    saveSnapshot();
+    doc_.deleteLine(lineNumber);
+    files_.markModified();
+}
+
+void TextEditor::deleteRangeOfLines(int startLine, int endLine)
+{
+    if (startLine < 1 || endLine > doc_.getLineCount() || startLine > endLine)
+        throw std::out_of_range("Invalid line range.");
+
+    saveSnapshot();
+    doc_.deleteRangeOfLines(startLine, endLine);
+    files_.markModified();
+}
+
+void TextEditor::deleteCharacterFromLine(int lineNumber, int charIndex)
+{
+    if (lineNumber < 1 || lineNumber > doc_.getLineCount())
+        throw std::out_of_range("Invalid line number.");
+
+    const mystring &line = doc_.getLine(lineNumber);
+    if (charIndex < 0 || charIndex >= line.length())
+        throw std::out_of_range("Invalid character index.");
+
+    saveSnapshot();
+    doc_.deleteCharacterFromLine(lineNumber, charIndex);
+    files_.markModified();
+}
+
+void TextEditor::deleteTextFromLine(int lineNumber, int startIndex, int count)
+{
+    if (lineNumber < 1 || lineNumber > doc_.getLineCount())
+        throw std::out_of_range("Invalid line number.");
+    if (count <= 0)
+        return;
+
+    const mystring &line = doc_.getLine(lineNumber);
+    if (startIndex < 0 || startIndex >= line.length())
+        throw std::out_of_range("Invalid start index.");
+
+    saveSnapshot();
+    doc_.deleteTextFromLine(lineNumber, startIndex, count);
+    files_.markModified();
+}
+
+bool TextEditor::deleteWord(const mystring &targetWord)
+{
+    if (targetWord.empty())
+        return false;
+
+    ResultArray matches = doc_.searchDocument(targetWord);
+    if (matches.size() == 0)
+        return false;
+
+    saveSnapshot();
+    bool deleted = doc_.deleteWord(targetWord);
+    if (deleted)
+        files_.markModified();
+    return deleted;
+}
+
+bool TextEditor::undo()
+{
+    if (!undoStack_.pop(doc_))
+        return false;
+
+    files_.markModified();
+    return true;
+}
+
+bool TextEditor::canUndo() const
+{
+    return !undoStack_.isEmpty();
+}
+
+void TextEditor::saveSnapshot()
+{
+    undoStack_.push(doc_);
+}
+
+void TextEditor::clearUndo()
+{
+    undoStack_.clear();
+}
+
+int TextEditor::undoCount() const
+{
+    return undoStack_.size();
 }
 
 const char *TextEditor::describe(EditResult r)

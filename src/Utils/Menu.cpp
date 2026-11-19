@@ -14,7 +14,7 @@ static bool confirmOverwrite(const mystring &path)
     return !answer.empty() && (answer[0] == 'y' || answer[0] == 'Y');
 }
 
-void displayMenu(const FileOperations &fileOps)
+void displayMenu(const FileOperations &fileOps, int undoCount)
 {
     std::cout << "\n=== TEXT EDITOR MENU ===\n";
     std::cout << "Current File: " << fileOps.displayName();
@@ -42,13 +42,27 @@ void displayMenu(const FileOperations &fileOps)
     std::cout << "15. Delete Text Range from Line\n";
     std::cout << "16. Delete Word\n";
     std::cout << "--- Search ---\n";
-       std::cout << "17. Search Document\n";
+    std::cout << "17. Search Document\n";
     std::cout << "--- Replace ---\n";
     std::cout << "18. Replace One Occurrence\n";
     std::cout << "19. Replace All Occurrences\n";
-    std::cout << "------------------------\n";
+    std::cout << "--- Undo ---\n";
+    std::cout << "20. Undo Last Action";
+    if (undoCount > 0)
+        std::cout << " (" << undoCount << " available)";
+    std::cout << "\n------------------------\n";
     std::cout << " 0. Exit\n";
     std::cout << "Select an option: ";
+}
+
+void handleCreateNew(TextEditor &editor)
+{
+    if (editor.files().confirmUnsavedChanges(editor.document()))
+    {
+        FileResult res = editor.files().createNew(editor.document());
+        editor.clearUndo();
+        std::cout << FileOperations::describe(res) << "\n";
+    }
 }
 
 void handleCreateNew(DoublyLinkedList &doc, FileOperations &fileOps)
@@ -56,6 +70,21 @@ void handleCreateNew(DoublyLinkedList &doc, FileOperations &fileOps)
     if (fileOps.confirmUnsavedChanges(doc))
     {
         FileResult res = fileOps.createNew(doc);
+        std::cout << FileOperations::describe(res) << "\n";
+    }
+}
+
+void handleOpen(TextEditor &editor)
+{
+    if (editor.files().confirmUnsavedChanges(editor.document()))
+    {
+        mystring path;
+        std::cout << "Enter file path to open: ";
+        if (!mystring::getline(std::cin, path))
+            return;
+        FileResult res = editor.files().open(path, editor.document());
+        if (res == FileResult::Ok)
+            editor.clearUndo();
         std::cout << FileOperations::describe(res) << "\n";
     }
 }
@@ -188,7 +217,7 @@ void handleInsertText(TextEditor &editor)
         std::cout << "Invalid input. Please enter a valid number.\n";
         return;
     }
-       std::cout << "Enter column (1 = start of line): ";
+    std::cout << "Enter column (1 = start of line): ";
     if (!(std::cin >> column))
     {
         if (std::cin.eof())
@@ -204,6 +233,36 @@ void handleInsertText(TextEditor &editor)
         return;
 
     std::cout << TextEditor::describe(editor.insertText(lineNum, column, text)) << "\n";
+}
+
+void handleModifyLine(TextEditor &editor)
+{
+    int lineNum;
+    mystring newText;
+    std::cout << "Enter line number to modify: ";
+    if (!(std::cin >> lineNum))
+    {
+        if (std::cin.eof())
+            return;
+        std::cin.clear();
+        std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+        std::cout << "Invalid input. Please enter a valid number.\n";
+        return;
+    }
+    std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+    std::cout << "Enter new text: ";
+    if (!mystring::getline(std::cin, newText))
+        return;
+
+    try
+    {
+        editor.modifyLine(lineNum, newText);
+        std::cout << "Line " << lineNum << " modified successfully.\n";
+    }
+    catch (const std::exception &e)
+    {
+        std::cout << "Error: " << e.what() << "\n";
+    }
 }
 
 void handleModifyLine(DoublyLinkedList &doc, FileOperations &fileOps)
@@ -237,6 +296,32 @@ void handleModifyLine(DoublyLinkedList &doc, FileOperations &fileOps)
     }
 }
 
+void handleDeleteLine(TextEditor &editor)
+{
+    int lineNum;
+    std::cout << "Enter line number to delete: ";
+    if (!(std::cin >> lineNum))
+    {
+        if (std::cin.eof())
+            return;
+        std::cin.clear();
+        std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+        std::cout << "Invalid input. Please enter a valid number.\n";
+        return;
+    }
+    std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+
+    try
+    {
+        editor.deleteLine(lineNum);
+        std::cout << "Line deleted successfully.\n";
+    }
+    catch (const std::exception &e)
+    {
+        std::cout << "Error: " << e.what() << "\n";
+    }
+}
+
 void handleDeleteLine(DoublyLinkedList &doc, FileOperations &fileOps)
 {
     int lineNum;
@@ -257,6 +342,42 @@ void handleDeleteLine(DoublyLinkedList &doc, FileOperations &fileOps)
         doc.deleteLine(lineNum);
         fileOps.markModified();
         std::cout << "Line deleted successfully.\n";
+    }
+    catch (const std::exception &e)
+    {
+        std::cout << "Error: " << e.what() << "\n";
+    }
+}
+
+void handleDeleteRangeOfLines(TextEditor &editor)
+{
+    int startLine, endLine;
+    std::cout << "Enter start line number: ";
+    if (!(std::cin >> startLine))
+    {
+        if (std::cin.eof())
+            return;
+        std::cin.clear();
+        std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+        std::cout << "Invalid input.\n";
+        return;
+    }
+    std::cout << "Enter end line number: ";
+    if (!(std::cin >> endLine))
+    {
+        if (std::cin.eof())
+            return;
+        std::cin.clear();
+        std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+        std::cout << "Invalid input.\n";
+        return;
+    }
+    std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+
+    try
+    {
+        editor.deleteRangeOfLines(startLine, endLine);
+        std::cout << "Lines " << startLine << " to " << endLine << " deleted successfully.\n";
     }
     catch (const std::exception &e)
     {
@@ -301,6 +422,42 @@ void handleDeleteRangeOfLines(DoublyLinkedList &doc, FileOperations &fileOps)
     }
 }
 
+void handleDeleteCharacter(TextEditor &editor)
+{
+    int lineNum, charIndex;
+    std::cout << "Enter line number: ";
+    if (!(std::cin >> lineNum))
+    {
+        if (std::cin.eof())
+            return;
+        std::cin.clear();
+        std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+        std::cout << "Invalid input.\n";
+        return;
+    }
+    std::cout << "Enter character index (0-based): ";
+    if (!(std::cin >> charIndex))
+    {
+        if (std::cin.eof())
+            return;
+        std::cin.clear();
+        std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+        std::cout << "Invalid input.\n";
+        return;
+    }
+    std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+
+    try
+    {
+        editor.deleteCharacterFromLine(lineNum, charIndex);
+        std::cout << "Character at index " << charIndex << " on line " << lineNum << " deleted successfully.\n";
+    }
+    catch (const std::exception &e)
+    {
+        std::cout << "Error: " << e.what() << "\n";
+    }
+}
+
 void handleDeleteCharacter(DoublyLinkedList &doc, FileOperations &fileOps)
 {
     int lineNum, charIndex;
@@ -331,6 +488,52 @@ void handleDeleteCharacter(DoublyLinkedList &doc, FileOperations &fileOps)
         doc.deleteCharacterFromLine(lineNum, charIndex);
         fileOps.markModified();
         std::cout << "Character at index " << charIndex << " on line " << lineNum << " deleted successfully.\n";
+    }
+    catch (const std::exception &e)
+    {
+        std::cout << "Error: " << e.what() << "\n";
+    }
+}
+
+void handleDeleteTextRange(TextEditor &editor)
+{
+    int lineNum, startIndex, count;
+    std::cout << "Enter line number: ";
+    if (!(std::cin >> lineNum))
+    {
+        if (std::cin.eof())
+            return;
+        std::cin.clear();
+        std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+        std::cout << "Invalid input.\n";
+        return;
+    }
+    std::cout << "Enter start index (0-based): ";
+    if (!(std::cin >> startIndex))
+    {
+        if (std::cin.eof())
+            return;
+        std::cin.clear();
+        std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+        std::cout << "Invalid input.\n";
+        return;
+    }
+    std::cout << "Enter number of characters to delete: ";
+    if (!(std::cin >> count))
+    {
+        if (std::cin.eof())
+            return;
+        std::cin.clear();
+        std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+        std::cout << "Invalid input.\n";
+        return;
+    }
+    std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+
+    try
+    {
+        editor.deleteTextFromLine(lineNum, startIndex, count);
+        std::cout << "Deleted " << count << " character(s) from line " << lineNum << ".\n";
     }
     catch (const std::exception &e)
     {
@@ -378,6 +581,37 @@ void handleDeleteTextRange(DoublyLinkedList &doc, FileOperations &fileOps)
         doc.deleteTextFromLine(lineNum, startIndex, count);
         fileOps.markModified();
         std::cout << "Deleted " << count << " character(s) from line " << lineNum << ".\n";
+    }
+    catch (const std::exception &e)
+    {
+        std::cout << "Error: " << e.what() << "\n";
+    }
+}
+
+void handleDeleteWord(TextEditor &editor)
+{
+    mystring word;
+    std::cout << "Enter word to delete: ";
+    if (!mystring::getline(std::cin, word))
+        return;
+
+    if (word.empty())
+    {
+        std::cout << "Word cannot be empty.\n";
+        return;
+    }
+
+    try
+    {
+        bool deleted = editor.deleteWord(word);
+        if (deleted)
+        {
+            std::cout << "Word \"" << word << "\" deleted successfully.\n";
+        }
+        else
+        {
+            std::cout << "Word \"" << word << "\" not found in document.\n";
+        }
     }
     catch (const std::exception &e)
     {
@@ -462,7 +696,7 @@ static bool readInt(const char *prompt, int &value)
     return true;
 }
 
-static void handleReplaceOccurrence(TextEditor &editor)
+void handleReplaceOccurrence(TextEditor &editor)
 {
     mystring target;
     mystring replacement;
@@ -496,7 +730,7 @@ static void handleReplaceOccurrence(TextEditor &editor)
               << ", column (index) " << (report.column - 1) << ".\n";
 }
 
-static void handleReplaceAll(TextEditor &editor)
+void handleReplaceAll(TextEditor &editor)
 {
     mystring target;
     mystring replacement;
@@ -526,6 +760,18 @@ static void handleReplaceAll(TextEditor &editor)
     std::cout << "Replaced " << report.count << " occurrence(s).\n";
 }
 
+void handleUndo(TextEditor &editor)
+{
+    if (editor.undo())
+    {
+        std::cout << "Undo successful. Document restored to previous state.\n";
+    }
+    else
+    {
+        std::cout << "Nothing to undo (undo history is empty).\n";
+    }
+}
+
 void menu(TextEditor &editor)
 {
     DoublyLinkedList &doc = editor.document();
@@ -540,7 +786,7 @@ void menu(TextEditor &editor)
             break;
         }
 
-        displayMenu(fileOps);
+        displayMenu(fileOps, editor.undoCount());
 
         if (!(std::cin >> choice))
         {
@@ -572,10 +818,10 @@ void menu(TextEditor &editor)
         switch (choice)
         {
         case 1:
-            handleCreateNew(doc, fileOps);
+            handleCreateNew(editor);
             break;
         case 2:
-            handleOpen(doc, fileOps);
+            handleOpen(editor);
             break;
         case 3:
             handleSave(doc, fileOps);
@@ -602,24 +848,24 @@ void menu(TextEditor &editor)
             handleInsertText(editor);
             break;
         case 11:
-            handleModifyLine(doc, fileOps);
+            handleModifyLine(editor);
             break;
         case 12:
-            handleDeleteLine(doc, fileOps);
+            handleDeleteLine(editor);
             break;
         case 13:
-            handleDeleteRangeOfLines(doc, fileOps);
+            handleDeleteRangeOfLines(editor);
             break;
         case 14:
-            handleDeleteCharacter(doc, fileOps);
+            handleDeleteCharacter(editor);
             break;
         case 15:
-            handleDeleteTextRange(doc, fileOps);
+            handleDeleteTextRange(editor);
             break;
         case 16:
-            handleDeleteWord(doc, fileOps);
+            handleDeleteWord(editor);
             break;
-              case 17:
+        case 17:
             handleSearch(doc);
             break;
         case 18:
@@ -627,6 +873,9 @@ void menu(TextEditor &editor)
             break;
         case 19:
             handleReplaceAll(editor);
+            break;
+        case 20:
+            handleUndo(editor);
             break;
         default:
             std::cout << "Invalid option. Please select a valid menu number.\n";
