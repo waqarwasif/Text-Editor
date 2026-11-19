@@ -16,21 +16,21 @@ int main()
 {
     TextEditor ed;
 
-    // 1. Typing into an empty document creates the first line
+    // Test 1: Insert into empty document
     check(ed.insertText(1, 1, "hello") == EditResult::Ok, "type into empty document");
     check(ed.document().getLineCount() == 1 && ed.document().getLine(1) == "hello", "first line created");
     check(ed.files().isModified(), "marked modified");
 
-    // 2. Middle, start, end of an existing line
+    // Test 2: Insert at start, middle, and end of line
     check(ed.insertText(1, 3, "XX") == EditResult::Ok && ed.document().getLine(1) == "heXXllo", "middle");
     check(ed.insertText(1, 1, ">") == EditResult::Ok && ed.document().getLine(1) == ">heXXllo", "start");
     check(ed.insertText(1, 9, "!") == EditResult::Ok && ed.document().getLine(1) == ">heXXllo!", "append at len+1");
 
-    // 3. New last line through insertText (needs column 1)
+    // Test 3: Insert text creating new line
     check(ed.insertText(2, 1, "second") == EditResult::Ok && ed.document().getLineCount() == 2, "new last line");
     check(ed.insertText(3, 2, "x") == EditResult::ColumnOutOfRange, "new line needs column 1");
 
-    // 4. Every error leaves the document unchanged
+    // Test 4: Bounds and error checking
     check(ed.insertText(0, 1, "x") == EditResult::LineOutOfRange, "line 0");
     check(ed.insertText(4, 1, "x") == EditResult::LineOutOfRange, "line count+2");
     check(ed.insertText(1, 0, "x") == EditResult::ColumnOutOfRange, "column 0");
@@ -39,13 +39,13 @@ int main()
     check(ed.insertText(1, 1, "a\nb") == EditResult::InvalidText, "newline in text");
     check(ed.document().getLineCount() == 2 && ed.document().getLine(1) == ">heXXllo!", "errors changed nothing");
 
-    // 5. Failed edits must not mark the document modified
+    // Test 5: Failed edits do not mark modified
     TextEditor fresh;
     check(fresh.insertText(1, 2, "x") == EditResult::ColumnOutOfRange, "fresh: bad column");
     check(fresh.insertText(1, 1, "") == EditResult::NothingToInsert, "fresh: empty text");
     check(!fresh.files().isModified(), "failed edits do not mark modified");
 
-    // 6. insertNewLine
+    // Test 6: insertNewLine verification
     check(ed.insertNewLine(2) == EditResult::Ok && ed.document().getLine(2) == "" && ed.document().getLineCount() == 3, "blank line in the middle");
     check(ed.document().getLine(3) == "second", "later lines shift down");
     check(ed.insertNewLine(4, "last") == EditResult::Ok && ed.document().getLine(4) == "last", "new line at the end");

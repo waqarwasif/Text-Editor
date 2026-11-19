@@ -8,7 +8,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED True)
 if(MSVC)
     add_compile_options(/W4)
 else()
-    # Force static linking so MSYS2 doesn't require background DLLs to run
+    # Static linking for standalone binary portability
     set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -static -static-libgcc -static-libstdc++")
     add_compile_options(-Wall -Wextra)
 endif()
@@ -24,13 +24,13 @@ file(GLOB_RECURSE CORE_FILES CONFIGURE_DEPENDS
 add_executable(${PROJECT_NAME} src/main.cpp ${CORE_FILES})
 target_include_directories(${PROJECT_NAME} PRIVATE ${PROJECT_SOURCE_DIR}/src)
 
-# One executable per test file, because each has its own main()
+# Test suite configuration
 enable_testing()
 file(GLOB TEST_FILES CONFIGURE_DEPENDS "${PROJECT_SOURCE_DIR}/tests/*.cpp")
 foreach(test_src IN LISTS TEST_FILES)
     get_filename_component(test_name ${test_src} NAME_WE)
 
-    # Skip placeholders that have no main() yet
+    # Skip files without main()
     file(READ ${test_src} test_text)
     string(FIND "${test_text}" "main(" has_main)
     if(has_main EQUAL -1)

@@ -55,7 +55,7 @@ int main()
     std::remove(fa);
     std::remove(fb);
 
-    // ---- basic contract ----
+    // Basic file operations
     {
         FileOperations ops;
         DoublyLinkedList doc;
@@ -72,7 +72,7 @@ int main()
         check(ops.displayName() == "Untitled", "displayName of a new document");
     }
 
-    // ---- round trip ----
+    // File persistence round-trip
     {
         FileOperations ops;
         DoublyLinkedList doc;
@@ -92,7 +92,7 @@ int main()
               "round trip keeps every line");
     }
 
-    // ---- Step 4 regression targets ----
+    // Edge cases and format validations
     {   // BOM stripped
         const char bomHello[] = "\xEF\xBB\xBFhello\n";
         writeRaw(fa, bomHello, 9);

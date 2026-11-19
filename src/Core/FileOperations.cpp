@@ -24,7 +24,7 @@ bool isValidPath(const mystring &path)
     if (TextProcessing::containsAnyOf(name, "<>:\"|?*"))
         return false;
 #endif
-    for (size_t i = 0; i < name.length(); ++i)
+    for (int i = 0; i < name.length(); ++i)
     {
         unsigned char c = static_cast<unsigned char>(name[i]);
         if (c < 0x20)

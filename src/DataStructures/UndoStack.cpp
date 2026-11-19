@@ -61,7 +61,7 @@ bool UndoStack::pop(DoublyLinkedList &outDoc)
         return false;
 
     StackNode *temp = topNode;
-    outDoc.swap(temp->snapshot); // O(1) pointer swap into active document
+    outDoc.swap(temp->snapshot);
     topNode = topNode->next;
 
     delete temp;

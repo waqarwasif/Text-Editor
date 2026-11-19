@@ -105,7 +105,7 @@ EditResult TextEditor::replaceOccurrence(const mystring &target, const mystring 
             {
                 mystring updated;
                 if (!TextProcessing::replaceAt(text, pos, target.size(), replacement, updated))
-                    return EditResult::NoMatchFound; // cannot happen: pos comes from find()
+                    return EditResult::NoMatchFound;
 
                 saveSnapshot();
 
@@ -119,7 +119,7 @@ EditResult TextEditor::replaceOccurrence(const mystring &target, const mystring 
                 }
                 return EditResult::Ok;
             }
-            pos = text.find(target, pos + 1); // +1: overlapping matches count, like search
+            pos = text.find(target, pos + 1);
         }
     }
     return EditResult::NoMatchFound;

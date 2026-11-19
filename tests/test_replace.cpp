@@ -14,8 +14,6 @@ static void check(bool ok, const char *name)
     }
 }
 
-// Loads lines straight into the list. This does NOT mark the document as modified,
-// so tests can prove that failed / no-match replaces leave the flag untouched.
 static void fill(TextEditor &ed, std::initializer_list<const char *> lines)
 {
     for (const char *text : lines)
@@ -27,19 +25,16 @@ static void testHelpers()
     using namespace TextProcessing;
     mystring out("keep");
 
-    // replaceAt: valid ranges
     check(replaceAt("hello", 1, 3, "", out) && out == "ho", "replaceAt: delete middle");
     check(replaceAt("hello", 0, 5, "X", out) && out == "X", "replaceAt: whole string");
     check(replaceAt("hello", 4, 1, "!!", out) && out == "hell!!", "replaceAt: last character");
 
-    // replaceAt: invalid ranges must leave `out` untouched
     out = "keep";
     check(!replaceAt("hello", 3, 5, "x", out) && out == "keep", "replaceAt: range past the end");
     check(!replaceAt("hello", -1, 1, "x", out) && out == "keep", "replaceAt: negative index");
     check(!replaceAt("hello", 1, 0, "x", out) && out == "keep", "replaceAt: zero length");
     check(!replaceAt("", 0, 1, "x", out) && out == "keep", "replaceAt: empty string");
 
-    // replaceAllInLine: valid
     check(replaceAllInLine("aaa", "aa", "b", out) == 1 && out == "ba", "replaceAll: no overlap, left to right");
     check(replaceAllInLine("aaa", "a", "aa", out) == 3 && out == "aaaaaa", "replaceAll: replacement contains target");
     check(replaceAllInLine("abcabc", "abc", "", out) == 2 && out == "", "replaceAll: empty replacement deletes");
@@ -47,7 +42,6 @@ static void testHelpers()
     check(replaceAllInLine("xaax", "a", "-", out) == 2 && out == "x--x", "replaceAll: text before and after");
     check(replaceAllInLine("Aa", "a", "x", out) == 1 && out == "Ax", "replaceAll: case sensitive");
 
-    // replaceAllInLine: nothing to do must leave `out` untouched
     out = "keep";
     check(replaceAllInLine("abc", "x", "y", out) == 0 && out == "keep", "replaceAll: no match");
     check(replaceAllInLine("ab", "abc", "x", out) == 0 && out == "keep", "replaceAll: target longer than line");
@@ -93,7 +87,6 @@ static void testReplaceAll()
         check(ed.replaceAll("hello", "X") == EditResult::Ok && ed.document().getLine(1) == "Hello X", "replaceAll: case sensitive");
     }
     {
-        // every error leaves the document unchanged and unmodified
         TextEditor ed;
         fill(ed, {"abc"});
         check(ed.replaceAll("", "x") == EditResult::EmptyTarget, "replaceAll: empty target");
@@ -114,7 +107,7 @@ static void testReplaceAll()
         check(ed.document().getLine(1) == "foo" && !ed.files().isModified(), "replaceAll: other line untouched, unmodified");
     }
     {
-        TextEditor ed; // empty document
+        TextEditor ed;
         check(ed.replaceAll("a", "b") == EditResult::NoMatchFound, "replaceAll: empty document");
         check(ed.replaceAll("a", "b", 1) == EditResult::LineOutOfRange, "replaceAll: empty document, line 1");
         check(!ed.files().isModified(), "replaceAll: empty document stays unmodified");
@@ -124,7 +117,6 @@ static void testReplaceAll()
 static void testReplaceOccurrence()
 {
     {
-        // overlapping matches are counted exactly like searchDocument
         TextEditor ed;
         fill(ed, {"aaa", "a b a"});
         ReplaceReport rep;
@@ -135,7 +127,6 @@ static void testReplaceOccurrence()
         check(ed.files().isModified(), "occurrence: marks modified");
     }
     {
-        // occurrences continue across lines
         TextEditor ed;
         fill(ed, {"aaa", "a b a"});
         ReplaceReport rep;
@@ -158,7 +149,6 @@ static void testReplaceOccurrence()
               "occurrence: too large changes nothing");
     }
     {
-        // scoped to one line: occurrences are counted inside that line only
         TextEditor ed;
         fill(ed, {"aaa", "a b a"});
         ReplaceReport rep;
@@ -214,7 +204,7 @@ static void testReplaceOccurrence()
               "occurrence: works without a report");
     }
     {
-        TextEditor ed; // empty document
+        TextEditor ed;
         check(ed.replaceOccurrence("a", "b", 1) == EditResult::NoMatchFound, "occurrence: empty document");
         check(!ed.files().isModified(), "occurrence: empty document stays unmodified");
     }

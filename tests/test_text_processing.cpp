@@ -35,7 +35,7 @@ int main()
     mystring s = "hello";
     check(insertAt(s, 3, "XY", s) == TextStatus::Ok && s == "heXYllo", "out aliases str");
 
-    // ---- helpers used by FileOperations ----
+    // Helper utility validations
     check(isBlank("") && isBlank("  \t") && !isBlank(" a "), "isBlank");
     check(contains("abc", 'b') && !contains("abc", 'z') && !contains("", 'a'), "contains");
     check(contains(nulStr, '\0'), "contains finds NUL");

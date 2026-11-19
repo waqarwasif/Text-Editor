@@ -24,16 +24,13 @@ public:
     explicit UndoStack(int capacity = 20);
     ~UndoStack();
 
-    // Prevent accidental shallow copies of the entire undo history
     UndoStack(const UndoStack &) = delete;
     UndoStack &operator=(const UndoStack &) = delete;
 
-    // Core Stack Operations
     void push(const DoublyLinkedList &doc);
     bool pop(DoublyLinkedList &outDoc);
     const DoublyLinkedList &peek() const;
 
-    // Capacity & State Helpers
     bool isEmpty() const;
     int size() const;
     int capacity() const;

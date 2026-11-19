@@ -24,7 +24,7 @@ static bool throwsOutOfRange(Fn fn)
 
 int main()
 {
-    // ---- 1. ResultArray Tests ----
+    // ResultArray Tests
     {
         ResultArray arr;
         check(arr.size() == 0, "ResultArray initial size is 0");
@@ -40,38 +40,33 @@ int main()
         check(throwsOutOfRange([&] { arr.get(25); }), "ResultArray get(25) throws");
     }
 
-    // ---- 2. searchDocument Tests ----
+    // searchDocument Tests
     {
         DoublyLinkedList doc;
         doc.insertLine(1, "The quick brown fox");
         doc.insertLine(2, "jumps over the lazy dog");
         doc.insertLine(3, "fox and dog are friends");
 
-        // Target found once
         ResultArray r1 = doc.searchDocument("quick");
         check(r1.size() == 1, "search 'quick' count");
         check(r1.get(0).lineNumber == 1 && r1.get(0).startIndex == 4, "search 'quick' position");
 
-        // Target found across lines
         ResultArray r2 = doc.searchDocument("fox");
         check(r2.size() == 2, "search 'fox' count");
         check(r2.get(0).lineNumber == 1 && r2.get(0).startIndex == 16, "search 'fox' line 1 pos");
         check(r2.get(1).lineNumber == 3 && r2.get(1).startIndex == 0, "search 'fox' line 3 pos");
 
-        // Target not found
         ResultArray r3 = doc.searchDocument("cat");
         check(r3.size() == 0, "search 'cat' not found");
 
-        // Empty search target
         ResultArray r4 = doc.searchDocument("");
         check(r4.size() == 0, "search empty string returns 0 without crashing");
 
-        // Target longer than any line
         ResultArray r5 = doc.searchDocument("This target is way longer than any line in this document");
         check(r5.size() == 0, "search overly long target returns 0");
     }
 
-    // ---- 3. deleteWord Tests ----
+    // deleteWord Tests
     {
         DoublyLinkedList doc;
         doc.insertLine(1, "apple banana cherry");
@@ -85,25 +80,25 @@ int main()
         check(!doc.deleteWord(""), "deleteWord empty returns false");
     }
 
-    // ---- 4. deleteCharacterFromLine & deleteTextFromLine Tests ----
+    // deleteCharacterFromLine and deleteTextFromLine Tests
     {
         DoublyLinkedList doc;
         doc.insertLine(1, "ABCDEF");
 
-        doc.deleteCharacterFromLine(1, 0); // Delete 'A'
+        doc.deleteCharacterFromLine(1, 0);
         check(doc.getLine(1) == "BCDEF", "deleteCharacterFromLine index 0");
 
-        doc.deleteTextFromLine(1, 1, 2); // Delete 'CD' from 'BCDEF'
+        doc.deleteTextFromLine(1, 1, 2);
         check(doc.getLine(1) == "BEF", "deleteTextFromLine 2 chars");
 
-        doc.deleteTextFromLine(1, 1, 100); // Delete 'EF'
+        doc.deleteTextFromLine(1, 1, 100);
         check(doc.getLine(1) == "B", "deleteTextFromLine clamps to end of line");
 
         check(throwsOutOfRange([&] { doc.deleteCharacterFromLine(0, 0); }), "bad line throws");
         check(throwsOutOfRange([&] { doc.deleteCharacterFromLine(1, -1); }), "bad index throws");
     }
 
-    // ---- 5. deleteRangeOfLines Tests ----
+    // deleteRangeOfLines Tests
     {
         DoublyLinkedList doc;
         for (int i = 1; i <= 5; ++i)
@@ -113,16 +108,15 @@ int main()
 
         doc.deleteRangeOfLines(2, 4);
         check(doc.getLineCount() == 2, "deleteRangeOfLines count is 2");
-        check(doc.getLine(1) == "Line 1", "remaining line 1");
-        check(doc.getLine(2) == "Line 5", "remaining line 2 is Line 5");
+        check(doc.getLine(1) == "Line 1", "line 1 remains");
+        check(doc.getLine(2) == "Line 5", "line 5 remains");
 
-        doc.deleteRangeOfLines(1, 2);
-        check(doc.getLineCount() == 0 && doc.isEmpty(), "delete entire range empties document");
+        check(throwsOutOfRange([&] { doc.deleteRangeOfLines(0, 2); }), "bad start line throws");
+        check(throwsOutOfRange([&] { doc.deleteRangeOfLines(1, 10); }), "bad end line throws");
+        check(throwsOutOfRange([&] { doc.deleteRangeOfLines(3, 1); }), "inverted range throws");
     }
 
     if (failures == 0)
-    {
         std::cout << "All search, replace, and deletion tests passed.\n";
-    }
     return failures == 0 ? 0 : 1;
 }

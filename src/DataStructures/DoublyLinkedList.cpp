@@ -44,8 +44,8 @@ DoublyLinkedList &DoublyLinkedList::operator=(const DoublyLinkedList &other)
 {
     if (this != &other)
     {
-        DoublyLinkedList temp(other); // Deep copy
-        swap(temp);                   // O(1) pointer swap; temp destructor frees old nodes
+        DoublyLinkedList temp(other);
+        swap(temp);
     }
     return *this;
 }

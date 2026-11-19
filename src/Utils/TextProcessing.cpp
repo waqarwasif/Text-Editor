@@ -42,7 +42,7 @@ namespace TextProcessing
         return TextStatus::Ok;
     }
 
-      static void appendRange(mystring &dst, const char *src, int from, int to)
+    static void appendRange(mystring &dst, const char *src, int from, int to)
     {
         for (int i = from; i < to; ++i)
             dst.push_back(src[i]);
@@ -80,8 +80,8 @@ namespace TextProcessing
 
         mystring result;
         int count = 0;
-        int pos = 0;    // current scan position
-        int copied = 0; // everything before this index is already in `result`
+        int pos = 0;
+        int copied = 0;
 
         while (pos <= len - tLen)
         {
@@ -93,7 +93,7 @@ namespace TextProcessing
             {
                 appendRange(result, s, copied, pos);
                 appendRange(result, r, 0, rLen);
-                pos += tLen; // jump past the match: no overlaps, no rescanning inserted text
+                pos += tLen;
                 copied = pos;
                 ++count;
             }
